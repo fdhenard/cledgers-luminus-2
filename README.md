@@ -2,7 +2,12 @@
 
 generated using Luminus version "4.10"
 
-Generation command: `lein new luminus cledgers-luminus +jetty +postgres +re-frame +shadow-cljs +auth`
+## How it was generated
+
+    $ cd ~/dev/repos/
+    $ mkdir cledgers-luminus-2
+    $ lein new luminus cledgers-luminus +jetty +postgres +re-frame +shadow-cljs +auth
+
 
 FIXME
 
