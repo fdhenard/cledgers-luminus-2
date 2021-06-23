@@ -17,4 +17,6 @@ shadow-cljs.edn
 /node_modules
 /log
 
+# below added by F. Henard
 
+package-lock.json

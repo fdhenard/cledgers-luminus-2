@@ -18,12 +18,42 @@ You will need [Leiningen][1] 2.0 or above installed.
 
 [1]: https://github.com/technomancy/leiningen
 
-## Running
+- nvm + latest LTS node version
+- frontend dev install
+
+    ```
+    cd ~/dev/repos/cledgers-luminus-2
+    npm install
+    ```
+
+- postgresql
+
+## Running for dev
+
+### backend
 
 To start a web server for the application, run:
 
-    lein run 
+#### from repl
+
+```
+user> (mount/start)
+```
+
+#### from terminal
+
+```
+cd ~/dev/repos/cledgers-luminus-2
+lein run
+```
+
+### frontend
+
+```
+cd ~/dev/repos/cledgers-luminus-2
+npx shadow-cljs watch app
+```
 
 ## License
 
-Copyright © 2021 FIXME
+Copyright © 2021 Frank Henard - Eclipse like Clojure
