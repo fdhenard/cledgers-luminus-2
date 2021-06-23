@@ -1,13 +1,13 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
   (:require
-   [cledgers-luminus.config :refer [env]]
+   [cledgers.config :refer [env]]
     [clojure.pprint]
     [clojure.spec.alpha :as s]
     [expound.alpha :as expound]
     [mount.core :as mount]
-    [cledgers-luminus.core :refer [start-app]]
-    [cledgers-luminus.db.core]
+    [cledgers.core :refer [start-app]]
+    [cledgers.db.core]
     [conman.core :as conman]
     [luminus-migrations.core :as migrations]))
 
@@ -19,12 +19,12 @@
   "Starts application.
   You'll usually want to run this on startup."
   []
-  (mount/start-without #'cledgers-luminus.core/repl-server))
+  (mount/start-without #'cledgers.core/repl-server))
 
 (defn stop
   "Stops application."
   []
-  (mount/stop-except #'cledgers-luminus.core/repl-server))
+  (mount/stop-except #'cledgers.core/repl-server))
 
 (defn restart
   "Restarts application."
@@ -35,10 +35,10 @@
 (defn restart-db
   "Restarts database."
   []
-  (mount/stop #'cledgers-luminus.db.core/*db*)
-  (mount/start #'cledgers-luminus.db.core/*db*)
-  (binding [*ns* (the-ns 'cledgers-luminus.db.core)]
-    (conman/bind-connection cledgers-luminus.db.core/*db* "sql/queries.sql")))
+  (mount/stop #'cledgers.db.core/*db*)
+  (mount/start #'cledgers.db.core/*db*)
+  (binding [*ns* (the-ns 'cledgers.db.core)]
+    (conman/bind-connection cledgers.db.core/*db* "sql/queries.sql")))
 
 (defn reset-db
   "Resets database."

@@ -1,1 +1,1 @@
-web: java -Dclojure.main.report=stderr -cp target/uberjar/cledgers-luminus.jar clojure.main -m cledgers-luminus.core
+web: java -Dclojure.main.report=stderr -cp target/uberjar/cledgers.jar clojure.main -m cledgers.core

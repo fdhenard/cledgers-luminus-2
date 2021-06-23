@@ -1,7 +1,7 @@
 FROM openjdk:8-alpine
 
-COPY target/uberjar/cledgers-luminus.jar /cledgers-luminus/app.jar
+COPY target/uberjar/cledgers.jar /cledgers/app.jar
 
 EXPOSE 3000
 
-CMD ["java", "-jar", "/cledgers-luminus/app.jar"]
+CMD ["java", "-jar", "/cledgers/app.jar"]

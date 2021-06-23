@@ -1,4 +1,6 @@
-# cledgers-luminus
+# cledgers
+
+[toc]
 
 generated using Luminus version "4.10"
 
@@ -6,8 +8,7 @@ generated using Luminus version "4.10"
 
     $ cd ~/dev/repos/
     $ mkdir cledgers-luminus-2
-    $ lein new luminus cledgers-luminus +jetty +postgres +re-frame +shadow-cljs +auth
-
+    $ lein new luminus cledgers --to-dir . --force -- +jetty +postgres +re-frame +shadow-cljs +auth
 
 FIXME
 

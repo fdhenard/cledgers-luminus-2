@@ -1,4 +1,4 @@
-(defproject cledgers-luminus "0.1.0-SNAPSHOT"
+(defproject cledgers "0.1.0-SNAPSHOT"
 
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
@@ -51,7 +51,7 @@
   :test-paths ["test/clj"]
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
-  :main ^:skip-aot cledgers-luminus.core
+  :main ^:skip-aot cledgers.core
 
   :plugins [[lein-shell "0.5.0"]] 
   :clean-targets ^{:protect false}
@@ -63,7 +63,7 @@
              
              :prep-tasks ["compile" ["shell" "shadow-cljs" "release" "app"]]
              :aot :all
-             :uberjar-name "cledgers-luminus.jar"
+             :uberjar-name "cledgers.jar"
              :source-paths ["env/prod/clj"  "env/prod/cljs" ]
              :resource-paths ["env/prod/resources"]}
 
