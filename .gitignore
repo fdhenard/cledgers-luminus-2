@@ -20,3 +20,4 @@ shadow-cljs.edn
 # below added by F. Henard
 
 package-lock.json
+flycheck*
