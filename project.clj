@@ -43,7 +43,16 @@
                  [ring/ring-core "1.9.3"]
                  [ring/ring-defaults "0.3.2"]
                  [selmer "1.12.40"]
-                 [thheller/shadow-cljs "2.14.3" :scope "provided"]]
+                 [thheller/shadow-cljs "2.14.3" :scope "provided"]
+
+
+                 [cljs-ajax "0.8.3"
+                  :exclusions [org.clojure/clojure]]
+                 [ring-transit "0.1.6"]
+                 [com.github.seancorfield/honeysql "2.0.0-rc3"]
+                 #_[com.github.seancorfield/next.jdbc "1.2.674"]
+
+                 ]
 
   :min-lein-version "2.0.0"
   

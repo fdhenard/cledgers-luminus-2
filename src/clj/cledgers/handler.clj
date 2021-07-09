@@ -7,7 +7,9 @@
     [ring.middleware.content-type :refer [wrap-content-type]]
     [ring.middleware.webjars :refer [wrap-webjars]]
     [cledgers.env :refer [defaults]]
-    [mount.core :as mount]))
+    [mount.core :as mount]
+
+    [cledgers.routes.service :as service]))
 
 (mount/defstate init-app
   :start ((or (:init defaults) (fn [])))
@@ -17,7 +19,8 @@
   :start
   (ring/ring-handler
     (ring/router
-      [(home-routes)])
+     [(home-routes)
+      (service/service-routes)])
     (ring/routes
       (ring/create-resource-handler
         {:path "/"})

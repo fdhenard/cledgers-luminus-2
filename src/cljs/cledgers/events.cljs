@@ -76,3 +76,8 @@
   :common/error
   (fn [db _]
     (:common/error db)))
+
+
+;; (rf/reg-event-fx
+;;  :transaction/add-transaction
+;;  (fn []))

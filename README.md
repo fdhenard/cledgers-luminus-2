@@ -51,6 +51,7 @@ lein run
 
 ```
 cd ~/dev/repos/cledgers-luminus-2
+nvm use stable # 7/9/21 v14.17.1
 npx shadow-cljs watch app
 ```
 

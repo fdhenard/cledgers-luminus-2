@@ -13,9 +13,10 @@
     [reitit.core :as reitit]
     [reitit.frontend.easy :as rfe]
     [clojure.string :as string]
-    [cljs-uuid-utils.core :as uuid]
     [cljs-time.core :as time]
-    [cledgers.bulma-typeahead :as typeahead])
+    [cledgers.bulma-typeahead :as typeahead]
+
+    [ajax.core :as cljs-ajax])
   (:import goog.History))
 
 (defn nav-link [uri title page]
@@ -49,13 +50,18 @@
 
 
 
-(defn empty-xaction [] {:uuid (str (uuid/make-random-uuid))
+(defn empty-xaction [] {:uuid (str (random-uuid))
                         :date {:month (time/month @last-date-used)
                                :day (time/day @last-date-used)
                                :year (time/year @last-date-used)}
                         :description ""
                         :amount ""
                         :add-waiting true})
+
+(def xactions (r/atom {}))
+
+(defn xform-xaction-for-backend [xaction]
+  (dissoc xaction :add-waiting))
 
 
 (defn get-payees! [q-str callback]
@@ -67,12 +73,13 @@
                 #_ (pp/pprint something)]
             (callback payees)))]
 
-   (ajax/GET "/api/payees"
-             {:params {:q q-str}
-              :handler response->results
-              :error-handler (fn [err]
-                               (pp/pprint {:error err})
-                               #_(.log js/console "error: " (utils/pp err)))})))
+    (cljs-ajax/GET
+     "/api/payees"
+     {:params {:q q-str}
+      :handler response->results
+      :error-handler (fn [err]
+                       (pp/pprint {:error err})
+                       #_(.log js/console "error: " (utils/pp err)))})))
 
 
 (defn get-ledgers! [q-str callback]
@@ -80,12 +87,13 @@
         (fn [response]
           (let [ledgers (-> response :result)]
             (callback ledgers)))]
-    (ajax/GET "/api/ledgers"
-              {:params {:q q-str}
-               :handler response->results
-               :error-handler (fn [err]
-                                (pp/pprint {:error err})
-                                #_(.log js/console "error: " (utils/pp err)))})))
+    (cljs-ajax/GET
+     "/api/ledgers"
+     {:params {:q q-str}
+      :handler response->results
+      :error-handler (fn [err]
+                       (pp/pprint {:error err})
+                       #_(.log js/console "error: " (utils/pp err)))})))
 
 
 (defn new-xaction-row []
@@ -111,7 +119,9 @@
              {:value (get-in @new-xaction [:payee :name])
               :query-func get-payees!
               :on-change (fn [selection]
-                           (let [payee {:name (:value selection)
+                           (let [#_ (pp/pprint {:payee-change--selection
+                                               selection})
+                                 payee {:name (:value selection)
                                         :is-new (:is-new selection)
                                         :id (:id selection)}]
                              (swap! new-xaction assoc :payee payee)))
@@ -128,8 +138,7 @@
                                          :id (:id selection)}]
                              (swap! new-xaction assoc :ledger ledger)))
               :item->text (fn [item]
-                            (:name item))}
-             ]]
+                            (:name item))}]]
        [:td [:input {:type "text"
                      :value (:description @new-xaction)
                      :on-change #(swap! new-xaction assoc :description (-> % .-target .-value))}]]
@@ -138,8 +147,9 @@
                      :on-change #(swap! new-xaction assoc :amount (-> % .-target .-value))}]]
        [:td [:button
              {:on-click
-              (fn [evt]
-                (let [xaction-to-add @new-xaction]
+              (fn [_evt]
+                (let [xaction-to-add @new-xaction
+                      #_ (pp/pprint {:xaction-to-add xaction-to-add})]
                   (reset! last-date-used (time/local-date
                                           (js/parseInt (get-in @new-xaction [:date :year]))
                                           (js/parseInt (get-in @new-xaction [:date :month]))
@@ -147,23 +157,24 @@
                   (swap! xactions assoc (:uuid xaction-to-add) xaction-to-add)
                   (reset! new-xaction (empty-xaction))
                   ;; (.log js/console "new-xaction: " (utils/pp xaction-to-add))
-                  (ajax/POST "/api/xactions/"
-                             {:params {:xaction (xform-xaction-for-backend xaction-to-add)}
-                              :error-handler
-                              (fn [err]
-                                (pp/pprint {:error err})
-                                #_(.log js/console "error: " (utils/pp err))
-                                ;; (.log js/console "xactions before dissoc: " (utils/pp @xactions))
-                                (swap! xactions dissoc (:uuid xaction-to-add))
-                                ;; (.log js/console "xactions after dissoc: " (utils/pp @xactions))
-                                )
-                              :handler
-                              (fn [response]
-                                (let [added-xaction (get @xactions (:uuid xaction-to-add))
-                                      added-xaction (dissoc added-xaction :add-waiting)]
-                                  (swap! xactions assoc (:uuid xaction-to-add) added-xaction)
-                                  (.log js/console "success adding xaction")
-                                  (pp/pprint response)))})))
+                  (cljs-ajax/POST
+                   "/api/xactions"
+                   {:params {:xaction (xform-xaction-for-backend xaction-to-add)}
+                    :error-handler
+                    (fn [err]
+                      (pp/pprint {:error err})
+                      #_(.log js/console "error: " (utils/pp err))
+                      ;; (.log js/console "xactions before dissoc: " (utils/pp @xactions))
+                      (swap! xactions dissoc (:uuid xaction-to-add))
+                      ;; (.log js/console "xactions after dissoc: " (utils/pp @xactions))
+                      )
+                    :handler
+                    (fn [response]
+                      (let [added-xaction (get @xactions (:uuid xaction-to-add))
+                            added-xaction (dissoc added-xaction :add-waiting)]
+                        (swap! xactions assoc (:uuid xaction-to-add) added-xaction)
+                        (.log js/console "success adding xaction")
+                        (pp/pprint response)))})))
               }
              "Add"]]])))
 
