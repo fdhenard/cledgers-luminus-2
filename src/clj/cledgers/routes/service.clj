@@ -58,8 +58,6 @@
                ;; temporarily just get frank's id until we have
                ;; login/logout setup
                user-id (:id (db/get-frank-id))
-               _ (pp/pprint {:user-id user-id
-                             :user-id-type (type user-id)})
                _ (when-not user-id
                    (throw (ex-info "must have a user id" {})))
                {:keys [payee ledger date] :as xaction} (get-in req [:body :xaction])

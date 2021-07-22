@@ -26,20 +26,21 @@
    title])
 
 (defn navbar [] 
-  (r/with-let [expanded? (r/atom false)]
-              [:nav.navbar.is-info>div.container
-               [:div.navbar-brand
-                [:a.navbar-item {:href "/" :style {:font-weight :bold}} "cledgers"]
-                [:span.navbar-burger.burger
-                 {:data-target :nav-menu
-                  :on-click #(swap! expanded? not)
-                  :class (when @expanded? :is-active)}
-                 [:span][:span][:span]]]
-               [:div#nav-menu.navbar-menu
-                {:class (when @expanded? :is-active)}
-                [:div.navbar-start
-                 [nav-link "#/" "Home" :home]
-                 [nav-link "#/about" "About" :about]]]]))
+  (r/with-let
+    [expanded? (r/atom false)]
+    [:nav.navbar.is-info>div.container
+     [:div.navbar-brand
+      [:a.navbar-item {:href "/" :style {:font-weight :bold}} "cledgers"]
+      [:span.navbar-burger.burger
+       {:data-target :nav-menu
+        :on-click #(swap! expanded? not)
+        :class (when @expanded? :is-active)}
+       [:span][:span][:span]]]
+     [:div#nav-menu.navbar-menu
+      {:class (when @expanded? :is-active)}
+      [:div.navbar-start
+       [nav-link "#/" "Home" :home]
+       [nav-link "#/about" "About" :about]]]]))
 
 (defn about-page []
   [:section.section>div.container>div.content
@@ -65,35 +66,27 @@
 
 
 (defn get-payees! [q-str callback]
-  #_(println "callback:" callback)
   (let [response->results
-        (fn [response]
-          (let [payees (-> response :result)
-                #_ (println "something:")
-                #_ (pp/pprint something)]
-            (callback payees)))]
+        (fn [{:keys [result] :as _response}]
+          (callback result))]
 
     (cljs-ajax/GET
      "/api/payees"
      {:params {:q q-str}
       :handler response->results
       :error-handler (fn [err]
-                       (pp/pprint {:error err})
-                       #_(.log js/console "error: " (utils/pp err)))})))
-
+                       (pp/pprint {:error err}))})))
 
 (defn get-ledgers! [q-str callback]
   (let [response->results
-        (fn [response]
-          (let [ledgers (-> response :result)]
-            (callback ledgers)))]
+        (fn [{:keys [result] :as _response}]
+          (callback result))]
     (cljs-ajax/GET
      "/api/ledgers"
      {:params {:q q-str}
       :handler response->results
       :error-handler (fn [err]
-                       (pp/pprint {:error err})
-                       #_(.log js/console "error: " (utils/pp err)))})))
+                       (pp/pprint {:error err}))})))
 
 
 (defn new-xaction-row []
@@ -118,27 +111,25 @@
        [:td [typeahead/typeahead-component
              {:value (get-in @new-xaction [:payee :name])
               :query-func get-payees!
-              :on-change (fn [selection]
-                           (let [#_ (pp/pprint {:payee-change--selection
-                                               selection})
-                                 payee {:name (:value selection)
-                                        :is-new (:is-new selection)
-                                        :id (:id selection)}]
+              :on-change (fn [{:keys [value is-new id] :as _selection}]
+                           (let [payee {:name value
+                                        :is-new is-new
+                                        :id id}]
                              (swap! new-xaction assoc :payee payee)))
-              :item->text (fn [item]
-                            ;; (println "calling item->text")
-                            ;; (pp/pprint item)
-                            (:name item))}]]
+              :item->option (fn [{:payee/keys [id name]}]
+                              {:id id
+                               :value name})}]]
        [:td [typeahead/typeahead-component
              {:value (get-in @new-xaction [:ledger :name])
               :query-func get-ledgers!
-              :on-change (fn [selection]
-                           (let [ledger {:name (:value selection)
-                                         :is-new (:is-new selection)
-                                         :id (:id selection)}]
+              :on-change (fn [{:keys [value is-new id]}]
+                           (let [ledger {:name value
+                                         :is-new is-new
+                                         :id id}]
                              (swap! new-xaction assoc :ledger ledger)))
-              :item->text (fn [item]
-                            (:name item))}]]
+              :item->option (fn [{:ledger/keys [id name]}]
+                              {:id id
+                               :value name})}]]
        [:td [:input {:type "text"
                      :value (:description @new-xaction)
                      :on-change #(swap! new-xaction assoc :description (-> % .-target .-value))}]]
@@ -148,8 +139,7 @@
        [:td [:button
              {:on-click
               (fn [_evt]
-                (let [xaction-to-add @new-xaction
-                      #_ (pp/pprint {:xaction-to-add xaction-to-add})]
+                (let [xaction-to-add @new-xaction]
                   (reset! last-date-used (time/local-date
                                           (js/parseInt (get-in @new-xaction [:date :year]))
                                           (js/parseInt (get-in @new-xaction [:date :month]))
@@ -163,19 +153,14 @@
                     :error-handler
                     (fn [err]
                       (pp/pprint {:error err})
-                      #_(.log js/console "error: " (utils/pp err))
-                      ;; (.log js/console "xactions before dissoc: " (utils/pp @xactions))
-                      (swap! xactions dissoc (:uuid xaction-to-add))
-                      ;; (.log js/console "xactions after dissoc: " (utils/pp @xactions))
-                      )
+                      (swap! xactions dissoc (:uuid xaction-to-add)))
                     :handler
                     (fn [response]
                       (let [added-xaction (get @xactions (:uuid xaction-to-add))
                             added-xaction (dissoc added-xaction :add-waiting)]
                         (swap! xactions assoc (:uuid xaction-to-add) added-xaction)
                         (.log js/console "success adding xaction")
-                        (pp/pprint response)))})))
-              }
+                        (pp/pprint response)))})))}
              "Add"]]])))
 
 (defn home-page []
