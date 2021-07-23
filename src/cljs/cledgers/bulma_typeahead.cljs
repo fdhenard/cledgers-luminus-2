@@ -8,10 +8,7 @@
 
 
 (defn on-typeahead-change! [new-val count-atom value-state matches-atom is-loading-atom query-func]
-  (let [_ (swap! value-state (fn [state-in]
-                               (if-not state-in
-                                 {:textbox-val new-val}
-                                 (assoc state-in :textbox-val new-val))))
+  (let [_ (swap! value-state assoc :textbox-val new-val)
         _ (swap! count-atom inc)
         _ (js/setTimeout
            (fn []
@@ -27,9 +24,7 @@
   (let [change-count-atom (atom 0)
         is-loading-atom (atom false)]
     (fn []
-      (let [curr-val-state @value-state
-            textbox-val (when curr-val-state
-                          (:textbox-val curr-val-state))]
+      (let [textbox-val (:textbox-val @value-state)]
        (println "is-loading:" @is-loading-atom)
        [:div {:class #{:field}}
         [:div {:class #{:control (when @is-loading-atom :is-loading)}}
@@ -44,8 +39,10 @@
                                  is-loading-atom
                                  query-func))}]]]))))
 
-(defn typeahead-component [_parm-map]
-  (let [matches-atom (atom #{})]
+(defn typeahead-component [{:keys [value-state] :as _parm-map}]
+  (let [matches-atom (atom #{})
+        _ (when-not @value-state
+            (reset! value-state {}))]
     (fn [{:keys [query-func on-change item->option value-state] :as _parm-map}]
       (let [{:keys [selection-val textbox-val]} @value-state
             dropdown-expanded (not (= textbox-val selection-val))]
