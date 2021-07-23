@@ -61,10 +61,10 @@
                _ (when-not user-id
                    (throw (ex-info "must have a user id" {})))
                {:keys [payee ledger date] :as xaction} (get-in req [:body :xaction])
-               #_ (pp/pprint {#_#_:date date
+               _ (pp/pprint {#_#_:date date
                              #_#_:xaction xaction
                              #_#_:body (:body req)
-                             :req req})
+                             #_#_:req req})
                payee-id
                (if-not (:is-new payee)
                  (:id payee)

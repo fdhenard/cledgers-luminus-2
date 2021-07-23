@@ -1,7 +1,9 @@
 (ns cledgers.events
   (:require
+   [clojure.pprint :as pp]
+   [cljs-time.core :as time]
     [re-frame.core :as rf]
-    [ajax.core :as ajax]
+    [ajax.core :as cljs-ajax]
     [reitit.frontend.easy :as rfe]
     [reitit.frontend.controllers :as rfc]))
 
@@ -35,7 +37,7 @@
   (fn [_ _]
     {:http-xhrio {:method          :get
                   :uri             "/docs"
-                  :response-format (ajax/raw-response-format)
+                  :response-format (cljs-ajax/raw-response-format)
                   :on-success       [:set-docs]}}))
 
 (rf/reg-event-db
@@ -77,7 +79,51 @@
   (fn [db _]
     (:common/error db)))
 
+(rf/reg-event-db
+ :add-xaction-fail
+ (fn [{:keys [xactions] :as db}
+      [_event-id {:keys [uuid] :as other-arg}]]
+   (let [_ (pp/pprint {:add-xaction-fail
+                       {:other-arg other-arg
+                        :uuid uuid
+                        #_#_:err err}})
+         new-xactions (dissoc xactions uuid)]
+     (assoc db :xactions new-xactions))))
 
-;; (rf/reg-event-fx
-;;  :transaction/add-transaction
-;;  (fn []))
+(rf/reg-event-db
+ :add-xaction-success
+ (fn [db
+      [_event-id
+       {:keys [uuid] :as xaction}]]
+   (let [_ (pp/pprint {:add-xaction-success
+                       {#_#_:other-arg other-arg
+                        :xaction xaction}})
+         xaction-new (dissoc xaction :add-waiting?)]
+     (assoc-in db [:xactions uuid] xaction-new))))
+
+
+(defn xform-xaction-for-backend [xaction]
+  (dissoc xaction :add-waiting?))
+
+(rf/reg-event-fx
+ :transaction/add
+ (fn [{:keys [db] :as _cofx}
+      [_evt-id {:keys [uuid] :as xaction}]]
+   (let [_ (pp/pprint {:transaction/add
+                       {:xaction xaction
+                        :event-id _evt-id}})
+         xaction (assoc xaction :add-waiting? true)]
+     {:db (assoc-in db [:xactions uuid] xaction)
+      :http-xhrio
+      {:method :post
+       :uri "/api/xactions"
+       :params {:xaction (xform-xaction-for-backend xaction)}
+       :format (cljs-ajax/transit-request-format)
+       :response-format (cljs-ajax/raw-response-format)
+       :on-success [:add-xaction-success xaction]
+       :on-failure [:add-xaction-fail {:uuid uuid}]}})))
+
+(rf/reg-sub
+ :xactions
+ (fn [{:keys [xactions] :as _db} _query-v]
+   xactions))

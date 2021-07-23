@@ -57,12 +57,10 @@
                                :year (time/year @last-date-used)}
                         :description ""
                         :amount ""
-                        :add-waiting true})
-
-(def xactions (r/atom {}))
+                        :add-waiting? true})
 
 (defn xform-xaction-for-backend [xaction]
-  (dissoc xaction :add-waiting))
+  (dissoc xaction :add-waiting?))
 
 
 (defn get-payees! [q-str callback]
@@ -142,65 +140,58 @@
         [:button
          {:on-click
           (fn [_evt]
-            (let [xaction-to-add @new-xaction
-                  _ (reset! last-date-used (time/local-date
-                                            (js/parseInt (get-in @new-xaction [:date :year]))
-                                            (js/parseInt (get-in @new-xaction [:date :month]))
-                                            (js/parseInt (get-in @new-xaction [:date :day]))))
-                  _ (swap! xactions assoc (:uuid xaction-to-add) xaction-to-add)
+            (let [_ (rf/dispatch [:transaction/add @new-xaction])
                   _ (reset! new-xaction (empty-xaction))
 
                   _ (reset! payee-value-state nil)
-                  _ (reset! ledger-value-state nil)
-
-                  _ (cljs-ajax/POST
-                     "/api/xactions"
-                     {:params {:xaction (xform-xaction-for-backend xaction-to-add)}
-                      :error-handler
-                      (fn [err]
-                        (pp/pprint {:error err})
-                        (swap! xactions dissoc (:uuid xaction-to-add)))
-                      :handler
-                      (fn [response]
-                        (let [added-xaction (get @xactions (:uuid xaction-to-add))
-                              added-xaction (dissoc added-xaction :add-waiting)
-                              _ (swap! xactions assoc (:uuid xaction-to-add) added-xaction)
-                              _ (println "success adding xaction")
-                              _ (pp/pprint {:add-xaction-response response})]))})]))}
+                  _ (reset! ledger-value-state nil)]))}
          "Add"]]])))
 
 (defn home-page []
-  [:section.section>div.container>div.content
-   #_(when-let [docs @(rf/subscribe [:docs])]
-       [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])
-   [:div.container
-   #_[:div.row>div.col-sm-12
-    [:div "Hello world, it is now"]
-    [clock]]
-   [:div.row>div.col-sm-12
-    [:table.table
-     [:thead
-      [:tr
-       [:th "date"]
-       [:th "payee"]
-       [:th "ledger"]
-       [:th "desc"]
-       [:th "amount"]
-       [:th "controls"]]]
-     [:tbody
-      [new-xaction-row]
-      (for [[_ xaction] @xactions]
-        (let [#_ (.log js/console "xaction: " (utils/pp xaction))
-              class (when (:add-waiting xaction)
-                      "rowhighlight")]
-          [:tr {:key (:uuid xaction)
-                :class class}
-           [:td (let [date (:date xaction)]
-                  (str (:month date) "/" (:day date) "/" (:year date)))]
-           [:td (get-in xaction [:payee :name])]
-           [:td (get-in xaction [:ledger :name])]
-           [:td (:description xaction)]
-           [:td (:amount xaction)]]))]]]]])
+  (r/with-let
+    [xactions (rf/subscribe [:xactions])]
+    (let [_ (pp/pprint {:xactions @xactions})]
+     [:section.section>div.container>div.content
+      #_(when-let [docs @(rf/subscribe [:docs])]
+          [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])
+      [:div.container
+       #_[:div.row>div.col-sm-12
+          [:div "Hello world, it is now"]
+          [clock]]
+       [:div.row>div.col-sm-12
+        [:table.table
+         [:thead
+          [:tr
+           [:th "date"]
+           [:th "payee"]
+           [:th "ledger"]
+           [:th "desc"]
+           [:th "amount"]
+           [:th "controls"]]]
+         [:tbody
+          [new-xaction-row]
+          (doall
+           (for [[_ {:keys [add-waiting?
+                            uuid
+                            payee
+                            ledger
+                            description
+                            amount]
+                     {:keys [month day year]} :date
+                     :as _xaction}]
+                 @xactions]
+             (let [class (when add-waiting?
+                           "rowhighlight")
+                   {payee-name :name} payee
+                   {ledger-name :name} ledger]
+               ^{:key uuid}
+               [:tr {:key uuid
+                     :class class}
+                [:td (str month "/" day "/" year)]
+                [:td payee-name]
+                [:td ledger-name]
+                [:td description]
+                [:td amount]])))]]]]])))
 
 (defn page []
   (when-let [page @(rf/subscribe [:common/page])]
