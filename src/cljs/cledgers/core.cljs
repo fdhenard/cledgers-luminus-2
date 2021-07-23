@@ -90,7 +90,9 @@
 
 
 (defn new-xaction-row []
-  (let [new-xaction (r/atom (empty-xaction))]
+  (let [new-xaction (r/atom (empty-xaction))
+        payee-value-state (r/atom nil)
+        ledger-value-state (r/atom nil)]
     (fn []
       [:tr {:key "new-one"}
        [:td
@@ -109,7 +111,7 @@
                  :value (get-in @new-xaction [:date :year])
                  :on-change #(swap! new-xaction assoc-in [:date :year] (-> % .-target .-value))}]]
        [:td [typeahead/typeahead-component
-             {:value (get-in @new-xaction [:payee :name])
+             {:value-state payee-value-state
               :query-func get-payees!
               :on-change (fn [{:keys [value is-new id] :as _selection}]
                            (let [payee {:name value
@@ -120,7 +122,7 @@
                               {:id id
                                :value name})}]]
        [:td [typeahead/typeahead-component
-             {:value (get-in @new-xaction [:ledger :name])
+             {:value-state ledger-value-state
               :query-func get-ledgers!
               :on-change (fn [{:keys [value is-new id]}]
                            (let [ledger {:name value
@@ -136,32 +138,36 @@
        [:td [:input {:type "text"
                      :value (:amount @new-xaction)
                      :on-change #(swap! new-xaction assoc :amount (-> % .-target .-value))}]]
-       [:td [:button
-             {:on-click
-              (fn [_evt]
-                (let [xaction-to-add @new-xaction]
-                  (reset! last-date-used (time/local-date
-                                          (js/parseInt (get-in @new-xaction [:date :year]))
-                                          (js/parseInt (get-in @new-xaction [:date :month]))
-                                          (js/parseInt (get-in @new-xaction [:date :day]))))
-                  (swap! xactions assoc (:uuid xaction-to-add) xaction-to-add)
-                  (reset! new-xaction (empty-xaction))
-                  ;; (.log js/console "new-xaction: " (utils/pp xaction-to-add))
-                  (cljs-ajax/POST
-                   "/api/xactions"
-                   {:params {:xaction (xform-xaction-for-backend xaction-to-add)}
-                    :error-handler
-                    (fn [err]
-                      (pp/pprint {:error err})
-                      (swap! xactions dissoc (:uuid xaction-to-add)))
-                    :handler
-                    (fn [response]
-                      (let [added-xaction (get @xactions (:uuid xaction-to-add))
-                            added-xaction (dissoc added-xaction :add-waiting)]
-                        (swap! xactions assoc (:uuid xaction-to-add) added-xaction)
-                        (.log js/console "success adding xaction")
-                        (pp/pprint response)))})))}
-             "Add"]]])))
+       [:td
+        [:button
+         {:on-click
+          (fn [_evt]
+            (let [xaction-to-add @new-xaction
+                  _ (reset! last-date-used (time/local-date
+                                            (js/parseInt (get-in @new-xaction [:date :year]))
+                                            (js/parseInt (get-in @new-xaction [:date :month]))
+                                            (js/parseInt (get-in @new-xaction [:date :day]))))
+                  _ (swap! xactions assoc (:uuid xaction-to-add) xaction-to-add)
+                  _ (reset! new-xaction (empty-xaction))
+
+                  _ (reset! payee-value-state nil)
+                  _ (reset! ledger-value-state nil)
+
+                  _ (cljs-ajax/POST
+                     "/api/xactions"
+                     {:params {:xaction (xform-xaction-for-backend xaction-to-add)}
+                      :error-handler
+                      (fn [err]
+                        (pp/pprint {:error err})
+                        (swap! xactions dissoc (:uuid xaction-to-add)))
+                      :handler
+                      (fn [response]
+                        (let [added-xaction (get @xactions (:uuid xaction-to-add))
+                              added-xaction (dissoc added-xaction :add-waiting)
+                              _ (swap! xactions assoc (:uuid xaction-to-add) added-xaction)
+                              _ (println "success adding xaction")
+                              _ (pp/pprint {:add-xaction-response response})]))})]))}
+         "Add"]]])))
 
 (defn home-page []
   [:section.section>div.container>div.content
