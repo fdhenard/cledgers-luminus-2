@@ -16,7 +16,8 @@
     [cljs-time.core :as time]
     [cledgers.bulma-typeahead :as typeahead]
 
-    [ajax.core :as cljs-ajax])
+    [ajax.core :as cljs-ajax]
+    [cledgers.pages.ledgers-page :as ledgers-page])
   (:import goog.History))
 
 (defn nav-link [uri title page]
@@ -27,7 +28,8 @@
 
 (defn navbar [] 
   (r/with-let
-    [expanded? (r/atom false)]
+    [expanded? (r/atom false)
+     balance (rf/subscribe [:transaction/balance])]
     [:nav.navbar.is-info>div.container
      [:div.navbar-brand
       [:a.navbar-item {:href "/" :style {:font-weight :bold}} "cledgers"]
@@ -40,7 +42,11 @@
       {:class (when @expanded? :is-active)}
       [:div.navbar-start
        [nav-link "#/" "Home" :home]
-       [nav-link "#/about" "About" :about]]]]))
+       [nav-link "#/ledgers" "Ledgers" :ledgers]
+       [nav-link "#/about" "About" :about]]
+      [:div.navbar-end
+       [:div.navbar-item
+        "Balance: " @balance]]]]))
 
 (defn about-page []
   [:section.section>div.container>div.content
@@ -149,8 +155,7 @@
 
 (defn home-page []
   (r/with-let
-    [xactions (rf/subscribe [:transaction/all])
-     balance (rf/subscribe [:transaction/balance])]
+    [xactions (rf/subscribe [:transaction/all])]
     (let [#_ (pp/pprint {:xactions @xactions})]
      [:section.section>div.container>div.content
       #_(when-let [docs @(rf/subscribe [:docs])]
@@ -159,8 +164,6 @@
        #_[:div.row>div.col-sm-12
           [:div "Hello world, it is now"]
           [clock]]
-       [:div
-        (str "Balance: " @balance)]
        [:div.row>div.col-sm-12
         [:table.table
          [:thead
@@ -211,7 +214,9 @@
            :view        #'home-page
            :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
      ["/about" {:name :about
-                :view #'about-page}]]))
+                :view #'about-page}]
+     ["/ledgers" {:name :ledgers
+                  :view #'ledgers-page/ledgers-page}]]))
 
 (defn start-router! []
   (rfe/start!
