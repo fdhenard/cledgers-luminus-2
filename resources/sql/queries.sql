@@ -47,3 +47,6 @@ RETURNING id;
 -- :name get-frank-id :? :1
 SELECT id FROM cledgers_user
  WHERE username = 'frank'
+
+-- :name get-balance :? :1
+SELECT SUM(amount) from xaction;

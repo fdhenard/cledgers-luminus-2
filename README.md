@@ -55,6 +55,14 @@ nvm use stable # 7/9/21 v14.17.1
 npx shadow-cljs watch app
 ```
 
+#### connect to the cljs repl
+
+- `M-x cider-connect`
+- host: `localhost`
+- port: see shadow-cljs output. eg. `shadow-cljs - nREPL server started on port 50132`
+- `shadow.user> (shadow/repl :app)`
+- test repl?: `(js/alert "Hi")`
+
 ## License
 
 Copyright © 2021 Frank Henard - Eclipse like Clojure

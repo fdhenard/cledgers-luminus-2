@@ -57,11 +57,11 @@
          (let [#_#_user-id (get-in req [:session :identity :id])
                ;; temporarily just get frank's id until we have
                ;; login/logout setup
-               user-id (:id (db/get-frank-id))
+               {user-id :id} (db/get-frank-id)
                _ (when-not user-id
                    (throw (ex-info "must have a user id" {})))
                {:keys [payee ledger date] :as xaction} (get-in req [:body :xaction])
-               _ (pp/pprint {#_#_:date date
+               #_ (pp/pprint {#_#_:date date
                              #_#_:xaction xaction
                              #_#_:body (:body req)
                              #_#_:req req})
@@ -93,4 +93,19 @@
                #_ (log/debug (str "xactions post request:\n"
                                   (utils/pp-str {:request request})))
                _ (db/create-xaction! tx-conn updated-xaction)]
-           {:status 200})))}]])
+           {:status 200})))}]
+   ["/balance"
+    {:get
+     (fn [_req]
+       (let [#_ (println "here!")
+             {balance-bigdec :sum} (db/get-balance)]
+         {:status 200
+          :body {:balance balance-bigdec}}))}]])
+
+
+(comment
+
+  (db/get-balance)
+
+
+  )

@@ -149,8 +149,9 @@
 
 (defn home-page []
   (r/with-let
-    [xactions (rf/subscribe [:xactions])]
-    (let [_ (pp/pprint {:xactions @xactions})]
+    [xactions (rf/subscribe [:transaction/all])
+     balance (rf/subscribe [:transaction/balance])]
+    (let [#_ (pp/pprint {:xactions @xactions})]
      [:section.section>div.container>div.content
       #_(when-let [docs @(rf/subscribe [:docs])]
           [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])
@@ -158,6 +159,8 @@
        #_[:div.row>div.col-sm-12
           [:div "Hello world, it is now"]
           [clock]]
+       [:div
+        (str "Balance: " @balance)]
        [:div.row>div.col-sm-12
         [:table.table
          [:thead
@@ -220,6 +223,7 @@
 ;; Initialize app
 (defn ^:dev/after-load mount-components []
   (rf/clear-subscription-cache!)
+  (rf/dispatch [:initialize])
   (rdom/render [#'page] (.getElementById js/document "app")))
 
 (defn init! []
